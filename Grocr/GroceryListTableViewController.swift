@@ -31,7 +31,10 @@ class GroceryListTableViewController: UITableViewController {
   var items: [GroceryItem] = []
   var user: User!
   var userCountBarButtonItem: UIBarButtonItem!
+  
+  // Firebase properties
   let ref = FIRDatabase.database().reference(withPath: "grocery-items")
+  let usersRef = FIRDatabase.database().reference(withPath: "online")
   
   // MARK: UIViewController Lifecycle
   
@@ -71,6 +74,20 @@ class GroceryListTableViewController: UITableViewController {
     FIRAuth.auth()?.addStateDidChangeListener({ (auth, user) in
       guard let user = user else { return }
       self.user = User(authData: user)
+      
+      let currentUserRef = self.usersRef.child(self.user.uid)
+      currentUserRef.setValue(self.user.email)
+      currentUserRef.onDisconnectRemoveValue()
+    })
+    
+    usersRef.observe(.value, with: { snapshot in
+      if snapshot.exists() {
+        self.userCountBarButtonItem.title = snapshot.childrenCount.description
+      }
+      else {
+        self.userCountBarButtonItem.title = "0"
+      }
+        
     })
   }
   
